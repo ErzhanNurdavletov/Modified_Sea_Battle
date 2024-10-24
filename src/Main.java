@@ -22,6 +22,7 @@ public class Main {
             placeShips(computerField);
             System.out.print("Enter your username: ");
             String userName = sc.nextLine();
+            System.out.println("Enter coordinates (example: 0 6)");
 
 
 
@@ -37,35 +38,90 @@ public class Main {
             if (userChoice == no) {
                 userPlaying = false;
                 for (String key : usersScore.keySet()) {
-                    System.out.println(key + " " + usersScore.get(key));
+                    System.out.println("User: " + key + ", " + key + "'s number attempts: " + usersScore.get(key));
                 }
             }
             else if (userChoice == yes) {
                 fillGameFieldWater(computerField, gameField);
             }
+            else {
+                System.out.println("Incorrect input, try again");
+                return;
+            }
         }
     }
 
     static void placeShips (String[][] field) {
-        int wayChoice = random.nextInt(2);
-        int vertical = 0;
+        placeShip(field, 3);
+        placeShip(field, 2);
+        placeShip(field, 2);
 
-        int x = 0;
-        int y = 0;
-
-        if (wayChoice == vertical) {
-            x = random.nextInt(7);
-            y = random.nextInt(5);
+        for (int i = 0; i < 4; i++) {
+            placeShip(field, 1);
         }
-        else {
-            x = random.nextInt(5);
-            y = random.nextInt(7);
+    }
+    static void placeShip(String[][] field, int length) {
+        boolean placed = false;
+
+        while (!placed) {
+            int vertical = random.nextInt(2);  // 0 - горизонтально, 1 - вертикально
+            int x = vertical == 1 ? random.nextInt(7 - length + 1) : random.nextInt(7);
+            int y = vertical == 0 ? random.nextInt(7 - length + 1) : random.nextInt(7);
+
+            if (canPlaceShip(field, x, y, length, vertical == 1)) {
+                for (int i = 0; i < length; i++) {
+                    if (vertical == 1) {
+                        field[x + i][y] = " ⚓ ";
+                    } else {
+                        field[x][y + i] = " ⚓ ";
+                    }
+                }
+                placed = true;
+            }
         }
+    }
+    static boolean canPlaceShip(String[][] field, int x, int y, int length, boolean vertical) {
+        int startX = Math.max(0, x - 1);
+        int endX = Math.min(6, vertical ? x + length : x + 1);
+        int startY = Math.max(0, y - 1);
+        int endY = Math.min(6, vertical ? y + 1 : y + length);
+        for (int i = startX; i <= endX; i++) {
+            for (int j = startY; j <= endY; j++) {
+                if (!field[i][j].equals(" \uD83C\uDF0A ")) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    static void checkSunkShip(String[][] computerField, String[][] gameField, int x, int y) {
+        if (computerField[x][y].equals(" X ")) {
+            boolean isSunk = true;
 
-
-        for (int i = 0; i < 3; i++) {
-            field[x][y + i] = " ⚓ ";
-
+            for (int i = 0; i < 7; i++) {
+                if (computerField[x][i].equals(" ⚓ ")) {
+                    isSunk = false;
+                    break;
+                }
+            }
+            for (int i = 0; i < 7; i++) {
+                if (computerField[i][y].equals(" ⚓ ")) {
+                    isSunk = false;
+                    break;
+                }
+            }
+            if (isSunk) {
+                for (int i = 0; i < 7; i++) {
+                    if (computerField[x][i].equals(" X ")) {
+                        computerField[x][i] = " S ";
+                        gameField[x][i] = " S ";
+                    }
+                    if (computerField[i][y].equals(" X ")) {
+                        computerField[i][y] = " S ";
+                        gameField[i][y] = " S ";
+                    }
+                }
+            }
         }
     }
     static int startGame (String[][] computerField, String[][] gameField) {
@@ -85,14 +141,15 @@ public class Main {
             }
 
             else if (computerField[x][y].equals( " ⚓ ")) {
+                computerField[x][y] = " X ";
+                gameField[x][y] = " X ";
                 System.out.println("hit!");
-                computerField[x][y] = " x ";
-                gameField[x][y] = " x ";
+                checkSunkShip(computerField, gameField, x, y);
             }
-            else if (computerField[x][y].equals( " ~ ") || computerField[x][y].equals(" m ")) {
-                System.out.println("missed...");
-                computerField[x][y] = " m ";
-                gameField[x][y] = " m ";
+            else if (computerField[x][y].equals( " \uD83C\uDF0A ") || computerField[x][y].equals(" M ")) {
+                computerField[x][y] = " M ";
+                gameField[x][y] = " M ";
+                System.out.println("miss...");
             }
 
 
@@ -128,8 +185,8 @@ public class Main {
      static void fillGameFieldWater (String[][] computerField, String[][] gameField) {
          for (int i = 0; i < 7; i++) {
              for (int j = 0; j < 7; j++) {
-                 gameField[i][j] = " ~ ";
-                 computerField[i][j] = " ~ ";
+                 gameField[i][j] = " \uD83C\uDF0A ";
+                 computerField[i][j] = " \uD83C\uDF0A ";
              }
          }
      }
