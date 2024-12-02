@@ -36,7 +36,7 @@ public class Main{
                 System.out.println("Was already hit");
             }
             else {
-                System.out.println(" Miss...");
+                System.out.println(" Miss");
                 gameField[inputX][inputY] = miss;
                 outputField[inputX][inputY] = miss;
             }
@@ -73,7 +73,7 @@ public class Main{
                 Xcoordinate = random.nextInt(8 - shipSize);
                 Ycoordinate = random.nextInt(7);
             }
-            if (CanPlaceShip(Xcoordinate, Ycoordinate, horizontalWay, shipSize)) {
+            if (canPlaceShip(Xcoordinate, Ycoordinate, horizontalWay, shipSize)) {
                 if (horizontalWay) {
                     for (int i = 0; i < shipSize; i++) {
                         gameField[Xcoordinate][Ycoordinate + i] = ship;
@@ -90,18 +90,66 @@ public class Main{
             }
         }
     }
-    static boolean CanPlaceShip(int Xcoordinate, int Ycoordinate, boolean horizontalWay, int shipSize) {
-        if(horizontalWay) {
-            for (int i = 0; i < shipSize; i++) {
-                if(gameField[Xcoordinate][Ycoordinate + i].equals(ship)) {
-                    return false;
+    static boolean canPlaceShip(int x, int y, boolean horizontalWay, int shipSize) {
+            for(int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if(x + dx < 0 || x + dx > 6 || y + dy < 0 || y + dy > 6) {
+                        continue;
+                    }
+                    if(gameField[x + dx][y + dy].equals(ship)) {
+                        return false;
+                    }
+                }
+            }
+            if(shipSize == 2) {
+            if(horizontalWay) {
+                for(int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        if(x + dx < 0 || x + dx > 6 || y + 1 + dy < 0 || y + 1 + dy > 6) {
+                            continue;
+                        }
+                        if(gameField[x + dx][y + 1 + dy].equals(ship)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            else {
+                for(int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        if(x + 1 + dx < 0 || x + 1 + dx > 6 || y + dy < 0 || y + dy > 6) {
+                            continue;
+                        }
+                        if(gameField[x + 1 + dx][y + dy].equals(ship)) {
+                            return false;
+                        }
+                    }
                 }
             }
         }
-        else {
-            for (int i = 0; i < shipSize; i++) {
-                if(gameField[Xcoordinate + i][Ycoordinate].equals(ship)) {
-                    return false;
+        else if(shipSize == 3) {
+            if(horizontalWay) {
+                for(int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        if (x + dx < 0 || x + dx > 6 || y + 2 + dy < 0 || y + 2 + dy > 6) {
+                            continue;
+                        }
+                        if (gameField[x + dx][y + 2 + dy].equals(ship)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            else {
+                for(int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        if (x + 2 + dx < 0 || x + 2 + dx > 6 || y + dy < 0 || y + dy > 6) {
+                            continue;
+                        }
+                        if (gameField[x + 2 + dx][y + dy].equals(ship)) {
+                            return false;
+                        }
+                    }
                 }
             }
         }
