@@ -1,202 +1,127 @@
 import java.util.Scanner;
 import java.util.Random;
-import java.util.HashMap;
 
-public class Main {
+public class Main{
 
-    static Scanner sc = new Scanner(System.in);
     static Random random = new Random();
+    static Scanner sc = new Scanner(System.in);
 
+    static String[][] gameField = new String[7][7];
+    static String[][] outputField = new String[7][7];
+
+    static String ship = " ⚓ ";
+    static String water = " \uD83C\uDF0A ";
+    static String miss = " ❌ ";
+    static String hit = " \uD83D\uDCA5 ";
 
     public static void main(String[] args) {
+        fillGameFieldWater();
+        placeShips();
+        takeInputCoordinates();
+        showGameField();
+    }
+    static void takeInputCoordinates() {
+        while(checkGameFinished()) {
+            showGameField();
+            System.out.print("Enter coordinates like this -> <0 6>: ");
+            int inputX = sc.nextInt();
+            int inputY = sc.nextInt();
 
-        String[][] gameField = new String[7][7];
-        String[][] computerField = new String[7][7];
-        HashMap<String, Integer> usersScore = new HashMap<>();
-
-        fillGameFieldWater(computerField, gameField);
-
-        boolean userPlaying = true;
-
-        while (userPlaying) {
-            placeShips(computerField);
-            System.out.print("Enter your username: ");
-            String userName = sc.nextLine();
-            System.out.println("Enter coordinates (example: 0 6)");
-
-
-
-            int numberUsersAttempts = startGame(computerField, gameField);
-            usersScore.put(userName, numberUsersAttempts);
-
-            System.out.println("Do you want to play again?");
-            System.out.print("1 - yes, 0 - no: ");
-            int userChoice = sc.nextInt();
-            int no = 0;
-            int yes = 1;
-
-            if (userChoice == no) {
-                userPlaying = false;
-                for (String key : usersScore.keySet()) {
-                    System.out.println("User: " + key + ", " + key + "'s number attempts: " + usersScore.get(key));
-                }
+            if(gameField[inputX][inputY].equals(ship)) {
+                gameField[inputX][inputY] = hit;
+                outputField[inputX][inputY] = hit;
+                System.out.println("Hit!");
             }
-            else if (userChoice == yes) {
-                fillGameFieldWater(computerField, gameField);
+            else if(gameField[inputX][inputY].equals(hit) || gameField[inputX][inputY].equals(miss)) {
+                System.out.println("Was already hit");
             }
             else {
-                System.out.println("Incorrect input, try again");
-                return;
+                System.out.println(" Miss...");
+                gameField[inputX][inputY] = miss;
+                outputField[inputX][inputY] = miss;
             }
         }
     }
-
-    static void placeShips (String[][] field) {
-        placeShip(field, 3);
-        placeShip(field, 2);
-        placeShip(field, 2);
-
+    static boolean checkGameFinished() {
+        for(int i = 0; i < 7; i++) {
+            for(int j = 0; j < 7; j++) {
+                if(gameField[i][j].equals(ship)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    static void placeShips() {
+        placeShip(3);
+        placeShip(2);
+        placeShip(2);
         for (int i = 0; i < 4; i++) {
-            placeShip(field, 1);
+            placeShip(1);
         }
     }
-    static void placeShip(String[][] field, int length) {
-        boolean placed = false;
-
-        while (!placed) {
-            int vertical = random.nextInt(2);  // 0 - горизонтально, 1 - вертикально
-            int x = vertical == 1 ? random.nextInt(7 - length + 1) : random.nextInt(7);
-            int y = vertical == 0 ? random.nextInt(7 - length + 1) : random.nextInt(7);
-
-            if (canPlaceShip(field, x, y, length, vertical == 1)) {
-                for (int i = 0; i < length; i++) {
-                    if (vertical == 1) {
-                        field[x + i][y] = " ⚓ ";
-                    } else {
-                        field[x][y + i] = " ⚓ ";
+    static void placeShip(int shipSize) {
+        boolean horizontalWay;
+        int Xcoordinate;
+        int Ycoordinate;
+        while(true) {
+            horizontalWay = random.nextBoolean();
+            if (horizontalWay) {
+                Xcoordinate = random.nextInt(7);
+                Ycoordinate = random.nextInt(8 - shipSize);
+            } else {
+                Xcoordinate = random.nextInt(8 - shipSize);
+                Ycoordinate = random.nextInt(7);
+            }
+            if (CanPlaceShip(Xcoordinate, Ycoordinate, horizontalWay, shipSize)) {
+                if (horizontalWay) {
+                    for (int i = 0; i < shipSize; i++) {
+                        gameField[Xcoordinate][Ycoordinate + i] = ship;
+                        outputField[Xcoordinate][Ycoordinate + i] = ship;
                     }
                 }
-                placed = true;
+                else {
+                    for (int i = 0; i < shipSize; i++) {
+                        gameField[Xcoordinate + i][Ycoordinate] = ship;
+                        outputField[Xcoordinate + i][Ycoordinate] = ship;
+                    }
+                }
+                break;
             }
         }
     }
-    static boolean canPlaceShip(String[][] field, int x, int y, int length, boolean vertical) {
-        int startX = Math.max(0, x - 1);
-        int endX = Math.min(6, vertical ? x + length : x + 1);
-        int startY = Math.max(0, y - 1);
-        int endY = Math.min(6, vertical ? y + 1 : y + length);
-        for (int i = startX; i <= endX; i++) {
-            for (int j = startY; j <= endY; j++) {
-                if (!field[i][j].equals(" \uD83C\uDF0A ")) {
+    static boolean CanPlaceShip(int Xcoordinate, int Ycoordinate, boolean horizontalWay, int shipSize) {
+        if(horizontalWay) {
+            for (int i = 0; i < shipSize; i++) {
+                if(gameField[Xcoordinate][Ycoordinate + i].equals(ship)) {
+                    return false;
+                }
+            }
+        }
+        else {
+            for (int i = 0; i < shipSize; i++) {
+                if(gameField[Xcoordinate + i][Ycoordinate].equals(ship)) {
                     return false;
                 }
             }
         }
         return true;
     }
-    static void checkSunkShip(String[][] computerField, String[][] gameField, int x, int y) {
-        if (computerField[x][y].equals(" X ")) {
-            boolean isSunk = true;
-
-            for (int i = 0; i < 7; i++) {
-                if (computerField[x][i].equals(" ⚓ ")) {
-                    isSunk = false;
-                    break;
-                }
-            }
-            for (int i = 0; i < 7; i++) {
-                if (computerField[i][y].equals(" ⚓ ")) {
-                    isSunk = false;
-                    break;
-                }
-            }
-            if (isSunk) {
-                for (int i = 0; i < 7; i++) {
-                    if (computerField[x][i].equals(" X ")) {
-                        computerField[x][i] = " S ";
-                        gameField[x][i] = " S ";
-                    }
-                    if (computerField[i][y].equals(" X ")) {
-                        computerField[i][y] = " S ";
-                        gameField[i][y] = " S ";
-                    }
-                }
+    static void fillGameFieldWater() {
+        for(int i = 0; i < 7; i++) {
+            for(int j = 0; j < 7; j++) {
+                gameField[i][j] = water;
+                outputField[i][j] = water;
             }
         }
     }
-    static int startGame (String[][] computerField, String[][] gameField) {
-        boolean gameStatus = true;
-
-        int numberAttempts = 0;
-
-        while (gameStatus) {
-            int x = sc.nextInt();
-            int y = sc.nextInt();
-            numberAttempts++;
-
-
-            if (x > 7 || x < 0 || y > 7 || y < 0) {
-                System.out.println("input incorrect, try again");
-                continue;
+    static void showGameField() {
+        for(int i = 0; i < 7; i++) {
+            for(int j = 0; j < 7; j++) {
+                System.out.print(gameField[i][j]);
             }
-
-            else if (computerField[x][y].equals( " ⚓ ")) {
-                computerField[x][y] = " X ";
-                gameField[x][y] = " X ";
-                System.out.println("hit!");
-                checkSunkShip(computerField, gameField, x, y);
-            }
-            else if (computerField[x][y].equals( " \uD83C\uDF0A ") || computerField[x][y].equals(" M ")) {
-                computerField[x][y] = " M ";
-                gameField[x][y] = " M ";
-                System.out.println("miss...");
-            }
-
-
-            displayGameField(gameField);
-            gameStatus = checkGameStatus(computerField);
-
+            System.out.println();
         }
-        System.out.println("Game finished. You won! number of your attempts: " + numberAttempts);
-        return numberAttempts;
-
-     }
-
-     static void displayGameField (String[][] gameFiled) {
-         for (int i = 0; i < gameFiled.length; i++) {
-             for (int j = 0; j < gameFiled[i].length; j++) {
-                 System.out.print(gameFiled[i][j]);
-             }
-             System.out.println();
-         }
-     }
-
-     static boolean checkGameStatus (String[][] computerField) {
-        for (int i = 0; i < computerField.length; i++) {
-            for (int j = 0; j < computerField[i].length; j++) {
-                if (computerField[i][j].equals(" ⚓ ")) {
-                    return true;
-                }
-            }
-         }
-        return false;
-     }
-
-     static void fillGameFieldWater (String[][] computerField, String[][] gameField) {
-         for (int i = 0; i < 7; i++) {
-             for (int j = 0; j < 7; j++) {
-                 gameField[i][j] = " \uD83C\uDF0A ";
-                 computerField[i][j] = " \uD83C\uDF0A ";
-             }
-         }
-     }
-
-
-
-
-
-
-
-
+    }
 
 }
