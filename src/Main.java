@@ -1,6 +1,7 @@
 import java.util.Scanner;
-import java.util.ArrayList;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class Main{
 
@@ -14,9 +15,13 @@ public class Main{
     static String water = " \uD83C\uDF0A ";
     static String miss = " ❌ ";
     static String hit = " \uD83D\uDCA5 ";
+    static String sunk = " \uD83D\uDC80 ";
 
     static ArrayList<String> players = new ArrayList<>();
     static ArrayList<Integer> scores = new ArrayList<>();
+
+    static ArrayList<Integer> coordinatesForCheckingSunk = new ArrayList<>();
+    static ArrayList<Boolean> waysForCheckingSunk = new ArrayList<>();
 
     public static void main(String[] args) {
 
@@ -25,8 +30,9 @@ public class Main{
             players.add(sc.nextLine());
             prepareGameField();
             placeShips();
-            int numberAttempts = startGameCalculateNumberAttempts();
+            int numberAttempts = startGameCountAttemptsNumber();
             scores.addLast(numberAttempts);
+            clearSavedCoordinatesCheckingSunk();
             showGameField();
             showUsersScores();
 
@@ -37,11 +43,11 @@ public class Main{
             }
         }
     }
-    static int startGameCalculateNumberAttempts() {
+    static int startGameCountAttemptsNumber() {
         String[] letters = {"", "A", "B", "C", "D", "E", "F", "G"};
         int userAttemptsNumber = 0;
         while(checkGameFinished()) {
-            cleanConsole();
+            clearConsole();
             showGameField();
             System.out.print("Enter coordinates like this -> <B 2>: ");
             String[] inputCoordinates = sc.nextLine().split(" ");
@@ -68,20 +74,22 @@ public class Main{
                 userAttemptsNumber++;
             }
             else if(gameField[inputX][inputY].equals(hit) || gameField[inputX][inputY].equals(miss)) {
-                System.out.println("Was already hit");
+                System.out.println("Was already hit, try again");
             }
-            else {
+            else{
                 System.out.println("Miss");
                 gameField[inputX][inputY] = miss;
                 outputField[inputX][inputY] = miss;
                 userAttemptsNumber++;
             }
+            changeSunkShipSymbol();
         }
         return userAttemptsNumber;
     }
     static void showUsersScores() {
+        Collections.sort(scores);
         System.out.println("Game finished. Results: ");
-        for (int i = 0; i < players.size(); i++) {
+        for(int i = 0; i < players.size(); i++) {
             System.out.println(players.get(i) + "'s score is: " + scores.get(i));
         }
     }
@@ -109,33 +117,35 @@ public class Main{
         int Ycoordinate;
         while(true) {
             horizontalWay = random.nextBoolean();
-            if (horizontalWay) {
+            if(horizontalWay) {
                 Xcoordinate = random.nextInt(7) + 1;
                 Ycoordinate = random.nextInt(8 - shipSize) + 1;
-            } else {
+            }
+            else{
                 Xcoordinate = random.nextInt(8 - shipSize) + 1;
                 Ycoordinate = random.nextInt(7) + 1;
             }
-            if (canPlaceShip(Xcoordinate, Ycoordinate, horizontalWay, shipSize)) {
-                if (horizontalWay) {
-                    for (int i = 0; i < shipSize; i++) {
+            if(canPlaceShip(Xcoordinate, Ycoordinate, horizontalWay, shipSize)) {
+                if(horizontalWay) {
+                    for(int i = 0; i < shipSize; i++) {
                         gameField[Xcoordinate][Ycoordinate + i] = ship;
-                        outputField[Xcoordinate][Ycoordinate + i] = ship;
                     }
                 }
-                else {
-                    for (int i = 0; i < shipSize; i++) {
+                else{
+                    for(int i = 0; i < shipSize; i++) {
                         gameField[Xcoordinate + i][Ycoordinate] = ship;
-                        outputField[Xcoordinate + i][Ycoordinate] = ship;
                     }
                 }
+                coordinatesForCheckingSunk.add(Xcoordinate);
+                coordinatesForCheckingSunk.add(Ycoordinate);
+                waysForCheckingSunk.add(horizontalWay);
                 break;
             }
         }
     }
     static boolean canPlaceShip(int x, int y, boolean horizontalWay, int shipSize) {
             for(int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
+                for(int dy = -1; dy <= 1; dy++) {
                     if(x + dx < 1 || x + dx > 7 || y + dy < 1 || y + dy > 7) {
                         continue;
                     }
@@ -145,30 +155,134 @@ public class Main{
                 }
             }
             if(horizontalWay) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        if (x + dx < 1 || x + dx > 7 || y + shipSize - 1 + dy < 1 || y + shipSize - 1 + dy > 7) {
+                for(int dx = -1; dx <= 1; dx++) {
+                    for(int dy = -1; dy <= 1; dy++) {
+                        if(x + dx < 1 || x + dx > 7 || y + shipSize - 1 + dy < 1 || y + shipSize - 1 + dy > 7) {
                             continue;
                         }
-                        if (gameField[x + dx][y + shipSize - 1 + dy].equals(ship)) {
+                        if(gameField[x + dx][y + shipSize - 1 + dy].equals(ship)) {
                             return false;
                         }
                     }
                 }
             }
             else {
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        if (x + shipSize - 1 + dx < 1 || x + shipSize - 1 + dx > 7 || y + dy < 1 || y + dy > 7) {
+                for(int dx = -1; dx <= 1; dx++) {
+                    for(int dy = -1; dy <= 1; dy++) {
+                        if(x + shipSize - 1 + dx < 1 || x + shipSize - 1 + dx > 7 || y + dy < 1 || y + dy > 7) {
                             continue;
                         }
-                        if (gameField[x + shipSize - 1 + dx][y + dy].equals(ship)) {
+                        if(gameField[x + shipSize - 1 + dx][y + dy].equals(ship)) {
                             return false;
                         }
                     }
                 }
             }
         return true;
+    }
+    static void changeSunkShipSymbol() {
+        if(waysForCheckingSunk.getFirst()) {
+            boolean flag = true;
+            for(int i = 0; i < 3; i++) {
+                if(!outputField[coordinatesForCheckingSunk.get(0)][coordinatesForCheckingSunk.get(1) + i].equals(hit)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag) {
+                for(int i = 0; i < 3; i++) {
+                    gameField[coordinatesForCheckingSunk.get(0)][coordinatesForCheckingSunk.get(1) + i] = sunk;
+                    outputField[coordinatesForCheckingSunk.get(0)][coordinatesForCheckingSunk.get(1) + i] = sunk;
+                }
+            }
+        }
+        else {
+            boolean flag = true;
+            for(int i = 0; i < 3; i++) {
+                if(!outputField[coordinatesForCheckingSunk.get(0) + i][coordinatesForCheckingSunk.get(1)].equals(hit)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag) {
+                for(int i = 0; i < 3; i++) {
+                    gameField[coordinatesForCheckingSunk.get(0) + i][coordinatesForCheckingSunk.get(1)] = sunk;
+                    outputField[coordinatesForCheckingSunk.get(0) + i][coordinatesForCheckingSunk.get(1)] = sunk;
+                }
+            }
+        }
+
+        if(waysForCheckingSunk.get(1)) {
+            boolean flag = true;
+            for (int i = 0; i < 2; i++) {
+                if(!outputField[coordinatesForCheckingSunk.get(2)][coordinatesForCheckingSunk.get(3) + i].equals(hit)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag) {
+                for (int i = 0; i < 2; i++) {
+                    gameField[coordinatesForCheckingSunk.get(2)][coordinatesForCheckingSunk.get(3) + i] = sunk;
+                    outputField[coordinatesForCheckingSunk.get(2)][coordinatesForCheckingSunk.get(3) + i] = sunk;
+                }
+            }
+        }
+        else {
+            boolean flag = true;
+            for (int i = 0; i < 2; i++) {
+                if(!outputField[coordinatesForCheckingSunk.get(2) + i][coordinatesForCheckingSunk.get(3)].equals(hit)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag) {
+                for (int i = 0; i < 2; i++) {
+                    gameField[coordinatesForCheckingSunk.get(2) + i][coordinatesForCheckingSunk.get(3)] = sunk;
+                    outputField[coordinatesForCheckingSunk.get(2) + i][coordinatesForCheckingSunk.get(3)] = sunk;
+                }
+            }
+        }
+
+        if(waysForCheckingSunk.get(2)) {
+            boolean flag = true;
+            for (int i = 0; i < 2; i++) {
+                if(!outputField[coordinatesForCheckingSunk.get(4)][coordinatesForCheckingSunk.get(5) + i].equals(hit)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag) {
+                for (int i = 0; i < 2; i++) {
+                    gameField[coordinatesForCheckingSunk.get(4)][coordinatesForCheckingSunk.get(5) + i] = sunk;
+                    outputField[coordinatesForCheckingSunk.get(4)][coordinatesForCheckingSunk.get(5) + i] = sunk;
+                }
+            }
+        }
+        else {
+            boolean flag = true;
+            for (int i = 0; i < 2; i++) {
+                if(!outputField[coordinatesForCheckingSunk.get(4) + i][coordinatesForCheckingSunk.get(5)].equals(hit)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag) {
+                for (int i = 0; i < 2; i++) {
+                    gameField[coordinatesForCheckingSunk.get(4) + i][coordinatesForCheckingSunk.get(5)] = sunk;
+                    outputField[coordinatesForCheckingSunk.get(4) + i][coordinatesForCheckingSunk.get(5)] = sunk;
+                }
+            }
+        }
+        for (int i = 6; i < coordinatesForCheckingSunk.size(); i += 2) {
+            if(outputField[coordinatesForCheckingSunk.get(i)][coordinatesForCheckingSunk.get(i + 1)].equals(hit)) {
+                gameField[coordinatesForCheckingSunk.get(i)][coordinatesForCheckingSunk.get(i + 1)] = sunk;
+                outputField[coordinatesForCheckingSunk.get(i)][coordinatesForCheckingSunk.get(i + 1)] = sunk;
+            }
+        }
+    }
+    static void clearSavedCoordinatesCheckingSunk() {
+        coordinatesForCheckingSunk.clear();
+        waysForCheckingSunk.clear();
     }
     static void prepareGameField() {
         for(int i = 1; i < 8; i++) {
@@ -178,11 +292,11 @@ public class Main{
             }
         }
         String[] letters = {"   ", " A ", " B ", " C ", " D ", " E ", " F ", " G "};
-        for (int i = 0; i < 8; i++) {
+        for(int i = 0; i < 8; i++) {
             gameField[i][0] = letters[i];
             outputField[i][0] = letters[i];
         }
-        for (int i = 1; i < 8; i++) {
+        for(int i = 1; i < 8; i++) {
             gameField[0][i] = "  " + i + " ";
             outputField[0][i] = "  " + i + " ";
         }
@@ -190,12 +304,12 @@ public class Main{
     static void showGameField() {
         for(int i = 0; i < 8; i++) {
             for(int j = 0; j < 8; j++) {
-                System.out.print(gameField[i][j]);
+                System.out.print(outputField[i][j]);
             }
             System.out.println();
         }
     }
-    static void cleanConsole() {
+    static void clearConsole() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
     }
